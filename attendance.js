@@ -1,4 +1,4 @@
-const serverURL = "http://localhost:5500";
+const serverURL = "https://qr-code-attendance-eqvu.onrender.com";
 
 function onScanSuccess(decodedText, decodedResult) {
     console.log(`Code matched = ${decodedText}`, decodedResult);

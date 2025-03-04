@@ -15,7 +15,7 @@ SHEETDB_REGISTRATION_URL = "https://sheetdb.io/api/v1/lvg1wuw9n1k20"
 app = Flask(__name__)
 
 # Enable CORS for all routes
-CORS(app, origins=["*"])
+CORS(app, origins=["https://qr-code-attendance-eqvu.onrender.com"])
 
 # PostgreSQL Configuration for qr_code_attendance (Student Registration)
 POSTGRES_HOST_REG = os.getenv("POSTGRES_HOST_REG", "dpg-cv3fhfl6l47c73fd9tm0-a")

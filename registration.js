@@ -1,4 +1,4 @@
-const serverURL = "http://localhost:5500";
+const serverURL = "https://qr-code-attendance-eqvu.onrender.com";
 
 async function registerStudent() {
     try {
