@@ -16,7 +16,7 @@
             align-items: center;
             height: 100vh;
         }
-
+    
         .container {
             background: white;
             padding: 20px;
@@ -26,28 +26,29 @@
             text-align: center;
             position: relative;
         }
-
+    
         h1 {
             color: #333;
             margin-bottom: 10px;
         }
-
+    
         .content {
             display: flex;
             align-items: center;
             text-align: left;
         }
-
+    
         .qr-code img {
             width: 120px;
             height: 120px;
             margin-right: 20px;
         }
-
+    
         .details p {
             margin: 10px 0;
         }
-
+    
+        /* General Button Styles */
         .download-btn,
         .register-btn,
         .home-btn {
@@ -56,44 +57,91 @@
             background-color: #007bff;
             color: white;
             border: none;
-            padding: 8px 12px;
+            padding: 10px 15px;
             cursor: pointer;
             border-radius: 5px;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
-
+    
         .download-btn:hover,
         .register-btn:hover,
         .home-btn:hover {
             background-color: #0056b3;
+            transform: translateY(-2px);
         }
-
+    
+        .download-btn:active,
+        .register-btn:active,
+        .home-btn:active {
+            transform: translateY(0);
+        }
+    
+        /* Specific Styles for the Register More Students Button */
+        .register-btn {
+            right: 120px; /* Adjusted position */
+            background-color: #28a745; /* Green color for a distinct look */
+        }
+    
+        .register-btn:hover {
+            background-color: #218838; /* Darker green on hover */
+        }
+    
+        /* Position Adjustments for Other Buttons */
         .download-btn {
             right: 10px;
-            /* Position for download button */
         }
-
-        .register-btn {
-            right: 185px;
-            /* Position for register button */
-        }
-
+    
         .home-btn {
             left: 10px;
-            /* Position for home button */
         }
-
+    
+        /* Responsive Design for Mobile Devices */
+        @media (max-width: 768px) {
+            .container {
+                width: 90%;
+                padding: 15px;
+            }
+    
+            .download-btn,
+            .register-btn,
+            .home-btn {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+    
+            .register-btn {
+                right: 100px; /* Adjusted position for smaller screens */
+            }
+        }
+    
+        @media (max-width: 480px) {
+            .download-btn,
+            .register-btn,
+            .home-btn {
+                padding: 6px 10px;
+                font-size: 11px;
+            }
+    
+            .register-btn {
+                right: 80px; /* Further adjusted position for very small screens */
+            }
+        }
+    
         /* Hide unnecessary elements when printing */
         @media print {
             * {
                 box-sizing: border-box;
             }
-
+    
             body {
                 margin: 0;
                 padding: 0;
                 background-color: white;
             }
-
+    
             .container {
                 width: 100%;
                 max-width: 600px;
@@ -102,35 +150,33 @@
                 text-align: left;
                 page-break-inside: avoid;
             }
-
+    
             h1 {
                 text-align: center;
-                /* Center the heading */
                 font-size: 24px;
                 margin-bottom: 10px;
             }
-
+    
             .details p {
                 font-size: 16px;
                 margin: 5px 0;
             }
-
+    
             .qr-code {
                 text-align: left;
             }
-
+    
             .qr-code img {
                 width: 220px;
                 height: 220px;
             }
-
+    
             .download-btn,
             .register-btn,
             .home-btn {
                 display: none !important;
-                /* Ensures the buttons are not visible at all */
             }
-
+    
             @page {
                 margin: 0;
                 size: A4 portrait;
