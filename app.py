@@ -1,5 +1,5 @@
 import os
-import mysql.connector
+import psycopg2  # Replaced mysql.connector with psycopg2
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import qrcode
@@ -17,17 +17,19 @@ app = Flask(__name__)
 # Enable CORS for all routes
 CORS(app, origins=["*"])
 
-# MySQL Configuration for qr_code_attendance (Student Registration)
-MYSQL_HOST_REG = os.getenv("MYSQL_HOST_REG", "BABY")
-MYSQL_USER_REG = os.getenv("MYSQL_USER_REG", "chaitan5434v")
-MYSQL_PASSWORD_REG = os.getenv("MYSQL_PASSWORD_REG", "master@123")
-MYSQL_DATABASE_REG = os.getenv("MYSQL_DATABASE_REG", "qr_code_attendance")
+# PostgreSQL Configuration for qr_code_attendance (Student Registration)
+POSTGRES_HOST_REG = os.getenv("POSTGRES_HOST_REG", "dpg-cv3fhfl6l47c73fd9tm0-a.singapore-postgres.render.com")
+POSTGRES_USER_REG = os.getenv("POSTGRES_USER_REG", "qr_database_iu3a_user")
+POSTGRES_PASSWORD_REG = os.getenv("POSTGRES_PASSWORD_REG", "bvaaARoWzrTTmBW5uayoTuosDzQwpWBN")
+POSTGRES_DATABASE_REG = os.getenv("POSTGRES_DATABASE_REG", "qr_database_iu3a")
+POSTGRES_PORT_REG = os.getenv("POSTGRES_PORT_REG", "5432")
 
-# MySQL Configuration for qr_code_attendance_making (Attendance)
-MYSQL_HOST_ATT = os.getenv("MYSQL_HOST_ATT", "BABY")
-MYSQL_USER_ATT = os.getenv("MYSQL_USER_ATT", "chaitan5434v")
-MYSQL_PASSWORD_ATT = os.getenv("MYSQL_PASSWORD_ATT", "master@123")
-MYSQL_DATABASE_ATT = os.getenv("MYSQL_DATABASE_ATT", "qr_code_attendance_making")
+# PostgreSQL Configuration for qr_code_attendance_making (Attendance)
+POSTGRES_HOST_ATT = os.getenv("POSTGRES_HOST_ATT", "dpg-cv3fhfl6l47c73fd9tm0-a.singapore-postgres.render.com")
+POSTGRES_USER_ATT = os.getenv("POSTGRES_USER_ATT", "qr_database_iu3a_user")
+POSTGRES_PASSWORD_ATT = os.getenv("POSTGRES_PASSWORD_ATT", "bvaaARoWzrTTmBW5uayoTuosDzQwpWBN")
+POSTGRES_DATABASE_ATT = os.getenv("POSTGRES_DATABASE_ATT", "qr_database_iu3a")
+POSTGRES_PORT_ATT = os.getenv("POSTGRES_PORT_ATT", "5432")
 
 # Upload Folder Configuration
 UPLOAD_FOLDER = 'uploads'
@@ -36,34 +38,36 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 # Ensure the upload folder exists
 Path(UPLOAD_FOLDER).mkdir(exist_ok=True)
 
-# Initialize MySQL Database Connection for Student Registration
+# Initialize PostgreSQL Database Connection for Student Registration
 def get_db_connection_reg():
     try:
-        conn = mysql.connector.connect(
-            host=MYSQL_HOST_REG,
-            user=MYSQL_USER_REG,
-            password=MYSQL_PASSWORD_REG,
-            database=MYSQL_DATABASE_REG
+        conn = psycopg2.connect(
+            host=POSTGRES_HOST_REG,
+            user=POSTGRES_USER_REG,
+            password=POSTGRES_PASSWORD_REG,
+            database=POSTGRES_DATABASE_REG,
+            port=POSTGRES_PORT_REG
         )
-        print("✅ Connected to MySQL (Registration)!")
+        print("✅ Connected to PostgreSQL (Registration)!")
         return conn
-    except mysql.connector.Error as err:
-        print("⚠️ MySQL Error (Registration):", err)
+    except psycopg2.Error as err:
+        print("⚠️ PostgreSQL Error (Registration):", err)
         return None
 
-# Initialize MySQL Database Connection for Attendance
+# Initialize PostgreSQL Database Connection for Attendance
 def get_db_connection_att():
     try:
-        conn = mysql.connector.connect(
-            host=MYSQL_HOST_ATT,
-            user=MYSQL_USER_ATT,
-            password=MYSQL_PASSWORD_ATT,
-            database=MYSQL_DATABASE_ATT
+        conn = psycopg2.connect(
+            host=POSTGRES_HOST_ATT,
+            user=POSTGRES_USER_ATT,
+            password=POSTGRES_PASSWORD_ATT,
+            database=POSTGRES_DATABASE_ATT,
+            port=POSTGRES_PORT_ATT
         )
-        print("✅ Connected to MySQL (Attendance)!")
+        print("✅ Connected to PostgreSQL (Attendance)!")
         return conn
-    except mysql.connector.Error as err:
-        print("⚠️ MySQL Error (Attendance):", err)
+    except psycopg2.Error as err:
+        print("⚠️ PostgreSQL Error (Attendance):", err)
         return None
 
 # Create User-Specific Student Registration Table
@@ -76,7 +80,7 @@ def create_user_student_table(username):
     table_name = f"students_{username}"
     cursor.execute(f'''
         CREATE TABLE IF NOT EXISTS {table_name} (
-            id INT AUTO_INCREMENT PRIMARY KEY,
+            id SERIAL PRIMARY KEY,
             rollNumber VARCHAR(255) UNIQUE NOT NULL,
             name VARCHAR(255) NOT NULL,
             father_name VARCHAR(255) NOT NULL,
@@ -92,7 +96,7 @@ def create_user_student_table(username):
     conn.close()
     return True
 
-# Initialize MySQL Databases
+# Initialize PostgreSQL Databases
 def init_db():
     # Initialize Registration Database
     conn_reg = get_db_connection_reg()
@@ -109,7 +113,7 @@ def init_db():
         # Create a general attendance table (optional, can be removed if not needed)
         cursor_att.execute('''
             CREATE TABLE IF NOT EXISTS attendance (
-                id INT AUTO_INCREMENT PRIMARY KEY,
+                id SERIAL PRIMARY KEY,
                 username VARCHAR(255) NOT NULL,
                 rollNumber VARCHAR(255) NOT NULL,
                 time VARCHAR(255) NOT NULL,
@@ -190,11 +194,11 @@ def register_student():
 
         return jsonify({"message": "Student registration successful"})
 
-    except mysql.connector.IntegrityError as e:
+    except psycopg2.IntegrityError as e:
         print("⚠️ Integrity Error:", str(e))
         return jsonify({"error": "Student already registered"}), 400
-    except mysql.connector.Error as e:
-        print("⚠️ MySQL Error:", str(e))
+    except psycopg2.Error as e:
+        print("⚠️ PostgreSQL Error:", str(e))
         return jsonify({"error": "Database error"}), 500
     except Exception as e:
         print("⚠️ Server error:", str(e))
@@ -270,7 +274,7 @@ def create_user_attendance_table(username):
     table_name = f"attendance_{username}"
     cursor.execute(f'''
         CREATE TABLE IF NOT EXISTS {table_name} (
-            id INT AUTO_INCREMENT PRIMARY KEY,
+            id SERIAL PRIMARY KEY,
             rollNumber VARCHAR(255) NOT NULL,
             name VARCHAR(255) NOT NULL,
             father_name VARCHAR(255) NOT NULL,
@@ -345,8 +349,8 @@ def mark_attendance():
 
         return jsonify({"message": "Attendance marked successfully"})
 
-    except mysql.connector.Error as e:
-        print("⚠️ MySQL Error:", str(e))
+    except psycopg2.Error as e:
+        print("⚠️ PostgreSQL Error:", str(e))
         return jsonify({"error": "Database error"}), 500
     except Exception as e:
         print("⚠️ Server error:", str(e))
@@ -364,8 +368,8 @@ def get_attendance_records(username):
         table_name = f"attendance_{username}"
 
         # Check if the table exists
-        cursor.execute(f"SHOW TABLES LIKE '{table_name}'")
-        if not cursor.fetchone():
+        cursor.execute(f"SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = '{table_name}')")
+        if not cursor.fetchone()[0]:
             conn.close()
             return jsonify({"error": "Attendance table not found"}), 404
 
@@ -393,8 +397,8 @@ def get_attendance_records(username):
 
         return jsonify({"records": attendance_records})
 
-    except mysql.connector.Error as e:
-        print("⚠️ MySQL Error:", str(e))
+    except psycopg2.Error as e:
+        print("⚠️ PostgreSQL Error:", str(e))
         return jsonify({"error": "Database error"}), 500
     except Exception as e:
         print("⚠️ Server error:", str(e))
