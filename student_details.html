@@ -167,7 +167,7 @@
             }
 
             try {
-                const apiUrl = `http://localhost:5500/student_details/${username}/${rollNumber}`;
+                const apiUrl = `https://qr-code-attendance-eqvu.onrender.com/student_details/${username}/${rollNumber}`;
                 const response = await fetch(apiUrl);
 
                 if (!response.ok) {
