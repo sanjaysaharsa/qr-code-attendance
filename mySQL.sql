@@ -1,9 +1,0 @@
-CREATE TABLE students (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    rollNumber VARCHAR(255) UNIQUE NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    class VARCHAR(255) NOT NULL,
-    bloodGroup VARCHAR(255) NOT NULL,
-    academicYear VARCHAR(255) NOT NULL,
-    fingerprint VARCHAR(255) UNIQUE NOT NULL
-);
