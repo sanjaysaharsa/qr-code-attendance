@@ -407,4 +407,4 @@ def get_attendance_records(username):
 # Start the Flask Server
 if __name__ == '__main__':
     print(f"🚀 Starting server on port 5500...")
-    app.run(host="0.0.0.0", port=5500, debug=True)
+    app.run(host="0.0.0.0", port=5500, debug=False)
