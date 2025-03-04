@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: biometeric-attendance-backend
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: SHEETDB_REGISTRATION_URL
+        value: https://sheetdb.io/api/v1/lvg1wuw9n1k20
+      - key: SHEETDB_ATTENDANCE_URL
+        value: https://sheetdb.io/api/v1/lm3f46uz6mp8m
+      - key: MYSQL_HOST
+        value: BABY  # Replace with actual MySQL host
+      - key: MYSQL_USER
+        value: root
+      - key: MYSQL_PASSWORD
+        value: master@123
+      - key: MYSQL_DATABASE
+        value: biometric_attendance
+
+  - type: static
+    name: biometeric-attendance-frontend
+    buildCommand: echo "Building static site..."
+    publish: ./  # Publish files from the root folder

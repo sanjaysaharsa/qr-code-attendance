@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SignUp</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="wrapper">
+        <h1>Sign Up</h1>
+        <h4>It's free and only takes a minute</h4>
+        <form action="https://sheetdb.io/api/v1/lvg1wuw9n1k20" method="post" id="sheetdb-form">
+            <div class="input-box">
+                <input type="text" name="data[Username]" placeholder="Username" id="username" required>
+            </div>
+            <div class="input-box">
+                <input type="text" name="data[First name]" placeholder="First Name" required>
+            </div>
+            <div class="input-box">
+                <input type="text" name="data[Last name]" placeholder="Last Name" required>
+            </div>
+            <div class="input-box">
+                <input type="email" name="data[Email]" placeholder="Email" required>
+            </div>
+            <div class="input-box">
+                <input type="password" name="data[Password]" placeholder="Password" required>
+            </div>
+            <div class="input-box">
+                <input type="password" name="data[Confirm Password]" placeholder="Confirm Password" required>
+            </div>
+            <button type="submit" class="btn">SignUp</button>
+        </form>
+        <div class="register-link">
+            <p>By clicking the Sign Up button, you agree to our <br>
+                <a href="#">Terms and Condition</a> and <a href="#">Policy Privacy</a>
+            </p>
+        </div>
+        <div class="register-link">
+            <p>Already have an account? <a href="index.html">Login here</a></p>
+        </div>
+    </div>
+    <script>
+        document.getElementById('sheetdb-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const password = document.querySelector('input[name="data[Password]"]').value;
+            const confirmPassword = document.querySelector('input[name="data[Confirm Password]"]').value;
+
+            if (password !== confirmPassword) {
+                alert("Passwords do not match. Please try again.");
+                return;
+            }
+
+            const response = await fetch("https://sheetdb.io/api/v1/lvg1wuw9n1k20");
+            const data = await response.json();
+
+            const username = document.getElementById('username').value;
+            const usernameExists = data.some(item => item.Username === username);
+
+            if (usernameExists) {
+                alert("Username already exists. Please choose another.");
+            } else {
+                fetch(e.target.action, {
+                    method: "POST",
+                    body: new FormData(e.target),
+                }).then(response => response.json())
+                  .then((html) => {
+                      alert("Signup successful!");
+                      window.open('d.html', '_blank');
+                  }).catch(error => {
+                      console.error("Error submitting form:", error);
+                      alert("There was an issue submitting your data.");
+                  });
+            }
+        });
+    </script>
+</body>
+</html>

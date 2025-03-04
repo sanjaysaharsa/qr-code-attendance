@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Record</title>
+    <link rel="stylesheet" href="style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body>
+    <div class="wrapper">
+        <form id="sheetdb-form">
+            <h1>Login</h1>
+            <div class="input-box">
+                <input type="text" name="data[Username]" placeholder="Username" required>
+                <i class='bx bxs-user'></i>
+            </div>
+            <div class="input-box">
+                <input type="password" name="data[Password]" placeholder="Password" required>
+                <i class='bx bxs-lock-alt'></i>
+            </div>
+            <div class="remember-forget">
+                <label> <input type="checkbox"> Remember me</label>
+                <a href="forgot-password.html">Forgot password?</a>
+            </div>
+            <button type="submit" class="btn">Login</button>
+            <div class="register-link">
+                <p>Don't have an account? <a href="signup.html">Register</a></p>
+            </div>
+        </form>
+    </div>
+    <script>
+        document.getElementById('sheetdb-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.querySelector('input[name="data[Username]"]').value;
+            const password = document.querySelector('input[name="data[Password]"]').value;
+
+            // Fetch data from Google Sheets
+            const response = await fetch("https://sheetdb.io/api/v1/lvg1wuw9n1k20");
+            const data = await response.json();
+
+            // Check if the username and password match
+            const user = data.find(item => item.Username === username && item.Password === password);
+            if (user) {
+                // Store the username in localStorage
+                localStorage.setItem("username", username);
+                alert("Login successful!");
+                window.location.href = 'a.html'; // Redirect to registration page
+            } else {
+                alert("Invalid username or password.");
+            }
+        });
+    </script>
+</body>
+</html>
