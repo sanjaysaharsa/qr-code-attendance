@@ -1,5 +1,5 @@
 import os
-import psycopg2
+import psycopg2  # Replaced mysql.connector with psycopg2
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import qrcode
@@ -7,8 +7,6 @@ from io import BytesIO
 import base64
 from pathlib import Path
 import requests
-from datetime import datetime
-import calendar
 
 # Define SheetDB API URL
 SHEETDB_REGISTRATION_URL = "https://sheetdb.io/api/v1/lvg1wuw9n1k20"
@@ -362,7 +360,6 @@ def mark_attendance():
         print("⚠️ Server error:", str(e))
         return jsonify({"error": "Server error: Could not mark attendance"}), 500
 
-# Fetch Attendance Summary API
 @app.route('/attendance_summary/<username>', methods=['GET'])
 def get_attendance_summary(username):
     month = request.args.get('month')
@@ -394,14 +391,6 @@ def get_attendance_summary(username):
         students = cursor_reg.fetchall()
         conn_reg.close()
 
-        # Fetch all unique working days in the selected month
-        cursor.execute(
-            f"SELECT DISTINCT date FROM {table_name} WHERE attendance_month = %s",
-            (month,)
-        )
-        working_days = cursor.fetchall()
-        total_working_days = len(working_days)
-
         attendance_summary = []
         for student in students:
             rollNumber = student[1]
@@ -416,12 +405,15 @@ def get_attendance_summary(username):
 
             # Fetch attendance records for the selected month
             cursor.execute(
-                f"SELECT DISTINCT date FROM {table_name} WHERE rollNumber = %s AND attendance_month = %s",
+                f"SELECT * FROM {table_name} WHERE rollNumber = %s AND attendance_month = %s",
                 (rollNumber, month)
             )
-            present_days = cursor.fetchall()
-            days_present = len(present_days)
-            days_absent = total_working_days - days_present
+            records = cursor.fetchall()
+
+            # Calculate the number of days present and absent
+            days_present = len(records)
+            # Assuming the month has 30 days for simplicity
+            days_absent = 30 - days_present
 
             attendance_summary.append({
                 "rollNumber": rollNumber,
@@ -438,10 +430,7 @@ def get_attendance_summary(username):
             })
 
         conn.close()
-        return jsonify({
-            "attendance_summary": attendance_summary,
-            "total_working_days": total_working_days
-        })
+        return jsonify({"attendance_summary": attendance_summary})
 
     except psycopg2.Error as e:
         print("⚠️ PostgreSQL Error:", str(e))
@@ -449,6 +438,54 @@ def get_attendance_summary(username):
     except Exception as e:
         print("⚠️ Server error:", str(e))
         return jsonify({"error": "Server error: Could not fetch attendance summary"}), 500
+
+# Fetch Attendance Records API
+@app.route('/attendance_records/<username>', methods=['GET'])
+def get_attendance_records(username):
+    try:
+        conn = get_db_connection_att()
+        if not conn:
+            return jsonify({"error": "Database connection error"}), 500
+
+        cursor = conn.cursor()
+        table_name = f"attendance_{username}"
+
+        # Check if the table exists
+        cursor.execute(f"SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = '{table_name}')")
+        if not cursor.fetchone()[0]:
+            conn.close()
+            return jsonify({"error": "Attendance table not found"}), 404
+
+        # Fetch records from the table
+        cursor.execute(f"SELECT * FROM {table_name}")
+        records = cursor.fetchall()
+        conn.close()
+
+        attendance_records = []
+        for record in records:
+            attendance_records.append({
+                "rollNumber": record[1],
+                "name": record[2],
+                "father_name": record[3],
+                "mother_name": record[4],
+                "date_of_birth": record[5].strftime('%Y-%m-%d'),  # Format date as YYYY-MM-DD
+                "class": record[6],
+                "category": record[7],
+                "gender": record[8],
+                "academicYear": record[9],
+                "attendance_month": record[10],
+                "time": record[11],
+                "date": record[12]
+            })
+
+        return jsonify({"records": attendance_records})
+
+    except psycopg2.Error as e:
+        print("⚠️ PostgreSQL Error:", str(e))
+        return jsonify({"error": "Database error"}), 500
+    except Exception as e:
+        print("⚠️ Server error:", str(e))
+        return jsonify({"error": "Server error: Could not fetch attendance records"}), 500
 
 # Start the Flask Server
 if __name__ == '__main__':
