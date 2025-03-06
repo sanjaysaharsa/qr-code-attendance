@@ -18,28 +18,32 @@
 
         .container {
             max-width: 1200px;
-            margin: 50px auto;
+            margin: 20px auto;
             padding: 20px;
             background-color: #fff;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
+            overflow-x: auto; /* Allow horizontal scrolling on small screens */
         }
 
         h1 {
             text-align: center;
             color: #333;
+            font-size: 24px; /* Adjust font size for mobile */
         }
 
         .month-selector {
             display: flex;
+            flex-wrap: wrap; /* Allow wrapping on small screens */
             justify-content: center;
             margin-bottom: 20px;
+            gap: 10px; /* Add spacing between elements */
         }
 
         .month-selector label {
-            margin-right: 10px;
-            font-size: 18px;
+            font-size: 16px;
             color: #555;
+            align-self: center; /* Center align label */
         }
 
         .month-selector select {
@@ -47,6 +51,7 @@
             font-size: 16px;
             border-radius: 4px;
             border: 1px solid #ccc;
+            width: 150px; /* Set a fixed width for the dropdown */
         }
 
         .month-selector button {
@@ -57,7 +62,6 @@
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            margin-left: 10px;
         }
 
         .month-selector button:hover {
@@ -80,6 +84,7 @@
         td {
             padding: 12px;
             text-align: left;
+            font-size: 14px; /* Adjust font size for mobile */
         }
 
         th {
@@ -93,6 +98,42 @@
 
         tr:hover {
             background-color: #f1f1f1;
+        }
+
+        /* Responsive table styles */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            h1 {
+                font-size: 20px;
+            }
+
+            .month-selector {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .month-selector select {
+                width: 100%; /* Full width on small screens */
+                margin-bottom: 10px;
+            }
+
+            .month-selector button {
+                width: 100%; /* Full width on small screens */
+            }
+
+            table {
+                display: block;
+                overflow-x: auto; /* Allow horizontal scrolling */
+                white-space: nowrap; /* Prevent text wrapping */
+            }
+
+            th,
+            td {
+                min-width: 120px; /* Set minimum column width */
+            }
         }
     </style>
 </head>
@@ -137,7 +178,6 @@
                 <!-- Rows will be populated here -->
             </tbody>
         </table>
-
     </div>
 
     <script>
@@ -174,17 +214,17 @@
                     data.attendance_summary.forEach(student => {
                         const row = document.createElement("tr");
                         row.innerHTML = `
-                    <td>${student.rollNumber}</td>
-                    <td>${student.name}</td>
-                    <td>${student.father_name}</td>
-                    <td>${student.date_of_birth}</td>
-                    <td>${student.class}</td>
-                    <td>${student.category}</td>
-                    <td>${student.gender}</td>
-                    <td>${student.academicYear}</td>
-                    <td>${student.days_present}</td>
-                    <td>${student.days_absent}</td>
-                `;
+                            <td>${student.rollNumber}</td>
+                            <td>${student.name}</td>
+                            <td>${student.father_name}</td>
+                            <td>${student.date_of_birth}</td>
+                            <td>${student.class}</td>
+                            <td>${student.category}</td>
+                            <td>${student.gender}</td>
+                            <td>${student.academicYear}</td>
+                            <td>${student.days_present}</td>
+                            <td>${student.days_absent}</td>
+                        `;
                         tableBody.appendChild(row);
                     });
                 })
