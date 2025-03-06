@@ -380,6 +380,14 @@ def get_attendance_summary(username):
             conn.close()
             return jsonify({"error": "Attendance table not found"}), 404
 
+        # Fetch all unique working days in the selected month
+        cursor.execute(
+            f"SELECT DISTINCT date FROM {table_name} WHERE attendance_month = %s",
+            (month,)
+        )
+        working_days = cursor.fetchall()
+        total_working_days = len(working_days)
+
         # Fetch all students from the registration table
         conn_reg = get_db_connection_reg()
         if not conn_reg:
@@ -397,23 +405,18 @@ def get_attendance_summary(username):
             name = student[2]
             father_name = student[3]
             mother_name = student[4]
-            date_of_birth = student[5].strftime('%d-%m-%y')
+            date_of_birth = student[5].strftime('%Y-%m-%d')
             classValue = student[6]
             category = student[7]
             gender = student[8]
             academicYear = student[9]
 
-            # Fetch attendance records for the selected month
+            # Fetch attendance records for the selected month and count distinct dates
             cursor.execute(
-                f"SELECT * FROM {table_name} WHERE rollNumber = %s AND attendance_month = %s",
+                f"SELECT COUNT(DISTINCT date) FROM {table_name} WHERE rollNumber = %s AND attendance_month = %s",
                 (rollNumber, month)
             )
-            records = cursor.fetchall()
-
-            # Calculate the number of days present and absent
-            days_present = len(records)
-            # Assuming the month has 30 days for simplicity
-            days_absent = 30 - days_present
+            days_present = cursor.fetchone()[0]  # Get the count of distinct dates
 
             attendance_summary.append({
                 "rollNumber": rollNumber,
@@ -425,12 +428,14 @@ def get_attendance_summary(username):
                 "category": category,
                 "gender": gender,
                 "academicYear": academicYear,
-                "days_present": days_present,
-                "days_absent": days_absent
+                "days_present": days_present
             })
 
         conn.close()
-        return jsonify({"attendance_summary": attendance_summary})
+        return jsonify({
+            "attendance_summary": attendance_summary,
+            "total_working_days": total_working_days
+        })
 
     except psycopg2.Error as e:
         print("⚠️ PostgreSQL Error:", str(e))
