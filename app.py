@@ -7,6 +7,7 @@ from io import BytesIO
 import base64
 from pathlib import Path
 import requests
+from datetime import datetime
 
 # Define SheetDB API URL
 SHEETDB_REGISTRATION_URL = "https://sheetdb.io/api/v1/lvg1wuw9n1k20"
@@ -421,7 +422,6 @@ def get_attendance_summary(username):
             )
             present_days = cursor.fetchall()
             days_present = len(present_days)
-            days_absent = total_working_days - days_present
 
             attendance_summary.append({
                 "rollNumber": rollNumber,
@@ -433,8 +433,7 @@ def get_attendance_summary(username):
                 "category": category,
                 "gender": gender,
                 "academicYear": academicYear,
-                "days_present": days_present,
-                "days_absent": days_absent
+                "days_present": days_present
             })
 
         conn.close()
