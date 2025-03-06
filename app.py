@@ -133,6 +133,10 @@ init_db()  # Run database setup
 def serve_index():
     return send_from_directory('.', 'index.html')
 
+@app.route('/attendance_summary')
+def serve_attendance_summary():
+    return send_from_directory('.', 'attendance_summary.html')
+
 @app.route('/<path:path>')
 def serve_static(path):
     return send_from_directory('.', path)
@@ -356,6 +360,85 @@ def mark_attendance():
         print("⚠️ Server error:", str(e))
         return jsonify({"error": "Server error: Could not mark attendance"}), 500
 
+@app.route('/attendance_summary/<username>', methods=['GET'])
+def get_attendance_summary(username):
+    month = request.args.get('month')
+    if not month:
+        return jsonify({"error": "Month parameter is required"}), 400
+
+    try:
+        conn = get_db_connection_att()
+        if not conn:
+            return jsonify({"error": "Database connection error"}), 500
+
+        cursor = conn.cursor()
+        table_name = f"attendance_{username}"
+
+        # Check if the table exists
+        cursor.execute(f"SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = '{table_name}')")
+        if not cursor.fetchone()[0]:
+            conn.close()
+            return jsonify({"error": "Attendance table not found"}), 404
+
+        # Fetch all students from the registration table
+        conn_reg = get_db_connection_reg()
+        if not conn_reg:
+            return jsonify({"error": "Database connection error"}), 500
+
+        cursor_reg = conn_reg.cursor()
+        student_table_name = f"students_{username}"
+        cursor_reg.execute(f"SELECT * FROM {student_table_name}")
+        students = cursor_reg.fetchall()
+        conn_reg.close()
+
+        attendance_summary = []
+        for student in students:
+            rollNumber = student[1]
+            name = student[2]
+            father_name = student[3]
+            mother_name = student[4]
+            date_of_birth = student[5].strftime('%Y-%m-%d')
+            classValue = student[6]
+            category = student[7]
+            gender = student[8]
+            academicYear = student[9]
+
+            # Fetch attendance records for the selected month
+            cursor.execute(
+                f"SELECT * FROM {table_name} WHERE rollNumber = %s AND attendance_month = %s",
+                (rollNumber, month)
+            )
+            records = cursor.fetchall()
+
+            # Calculate the number of days present and absent
+            days_present = len(records)
+            # Assuming the month has 30 days for simplicity
+            days_absent = 30 - days_present
+
+            attendance_summary.append({
+                "rollNumber": rollNumber,
+                "name": name,
+                "father_name": father_name,
+                "mother_name": mother_name,
+                "date_of_birth": date_of_birth,
+                "class": classValue,
+                "category": category,
+                "gender": gender,
+                "academicYear": academicYear,
+                "days_present": days_present,
+                "days_absent": days_absent
+            })
+
+        conn.close()
+        return jsonify({"attendance_summary": attendance_summary})
+
+    except psycopg2.Error as e:
+        print("⚠️ PostgreSQL Error:", str(e))
+        return jsonify({"error": "Database error"}), 500
+    except Exception as e:
+        print("⚠️ Server error:", str(e))
+        return jsonify({"error": "Server error: Could not fetch attendance summary"}), 500
+
 # Fetch Attendance Records API
 @app.route('/attendance_records/<username>', methods=['GET'])
 def get_attendance_records(username):
@@ -408,3 +491,4 @@ def get_attendance_records(username):
 if __name__ == '__main__':
     print(f"🚀 Starting server on port 5500...")
     app.run(host="0.0.0.0", port=5500, debug=False)
+    
