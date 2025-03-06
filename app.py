@@ -366,6 +366,16 @@ def get_attendance_summary(username):
     if not month:
         return jsonify({"error": "Month parameter is required"}), 400
 
+    # Convert numeric month to month name
+    month_names = {
+        "01": "January", "02": "February", "03": "March", "04": "April",
+        "05": "May", "06": "June", "07": "July", "08": "August",
+        "09": "September", "10": "October", "11": "November", "12": "December"
+    }
+    month_name = month_names.get(month)
+    if not month_name:
+        return jsonify({"error": "Invalid month value"}), 400
+
     try:
         conn = get_db_connection_att()
         if not conn:
@@ -383,7 +393,7 @@ def get_attendance_summary(username):
         # Fetch all unique working days in the selected month
         cursor.execute(
             f"SELECT DISTINCT date FROM {table_name} WHERE attendance_month = %s",
-            (month,)
+            (month_name,)
         )
         working_days = cursor.fetchall()
         total_working_days = len(working_days)
@@ -414,7 +424,7 @@ def get_attendance_summary(username):
             # Fetch attendance records for the selected month and count distinct dates
             cursor.execute(
                 f"SELECT COUNT(DISTINCT date) FROM {table_name} WHERE rollNumber = %s AND attendance_month = %s",
-                (rollNumber, month)
+                (rollNumber, month_name)
             )
             days_present = cursor.fetchone()[0]  # Get the count of distinct dates
 
