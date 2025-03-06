@@ -398,14 +398,14 @@ def get_attendance_summary(username):
         working_days = cursor.fetchall()
         total_working_days = len(working_days)
 
-        # Fetch all students from the registration table
+        # Fetch all students from the registration table, sorted by rollNumber numerically
         conn_reg = get_db_connection_reg()
         if not conn_reg:
             return jsonify({"error": "Database connection error"}), 500
 
         cursor_reg = conn_reg.cursor()
         student_table_name = f"students_{username}"
-        cursor_reg.execute(f"SELECT * FROM {student_table_name} ORDER BY rollNumber")
+        cursor_reg.execute(f"SELECT * FROM {student_table_name} ORDER BY rollNumber::INTEGER")
         students = cursor_reg.fetchall()
         conn_reg.close()
 
@@ -414,7 +414,7 @@ def get_attendance_summary(username):
             rollNumber = student[1]
             name = student[2]
             father_name = student[3]
-            date_of_birth = student[5].strftime('%Y-%m-%d')
+            date_of_birth = student[5].strftime('%d-%m-%y')
             classValue = student[6]
             category = student[7]
             gender = student[8]
