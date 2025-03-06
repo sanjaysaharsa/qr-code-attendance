@@ -427,6 +427,9 @@ def get_attendance_summary(username):
             )
             days_present = cursor.fetchone()[0]  # Get the count of distinct dates
 
+            # Calculate days absent
+            days_absent = total_working_days - days_present
+
             attendance_summary.append({
                 "rollNumber": rollNumber,
                 "name": name,
@@ -436,7 +439,8 @@ def get_attendance_summary(username):
                 "category": category,
                 "gender": gender,
                 "academicYear": academicYear,
-                "days_present": days_present
+                "days_present": days_present,
+                "days_absent": days_absent
             })
 
         conn.close()
