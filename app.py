@@ -405,7 +405,7 @@ def get_attendance_summary(username):
 
         cursor_reg = conn_reg.cursor()
         student_table_name = f"students_{username}"
-        cursor_reg.execute(f"SELECT * FROM {student_table_name}")
+        cursor_reg.execute(f"SELECT * FROM {student_table_name} ORDER BY rollNumber")
         students = cursor_reg.fetchall()
         conn_reg.close()
 
@@ -414,7 +414,6 @@ def get_attendance_summary(username):
             rollNumber = student[1]
             name = student[2]
             father_name = student[3]
-            mother_name = student[4]
             date_of_birth = student[5].strftime('%Y-%m-%d')
             classValue = student[6]
             category = student[7]
@@ -432,7 +431,6 @@ def get_attendance_summary(username):
                 "rollNumber": rollNumber,
                 "name": name,
                 "father_name": father_name,
-                "mother_name": mother_name,
                 "date_of_birth": date_of_birth,
                 "class": classValue,
                 "category": category,
