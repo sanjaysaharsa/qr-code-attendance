@@ -1,5 +1,5 @@
 import os
-import psycopg2  # Replaced mysql.connector with psycopg2
+import psycopg2
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import qrcode
@@ -7,6 +7,8 @@ from io import BytesIO
 import base64
 from pathlib import Path
 import requests
+from datetime import datetime  # Add this import
+import calendar
 
 # Define SheetDB API URL
 SHEETDB_REGISTRATION_URL = "https://sheetdb.io/api/v1/lvg1wuw9n1k20"
@@ -304,6 +306,8 @@ def mark_attendance():
     if not data:
         return jsonify({"error": "No data provided"}), 400
 
+    print("Incoming Attendance Data:", data)  # Debugging
+
     username = data.get("username")
     rollNumber = data.get("rollNumber")
     name = data.get("name")
@@ -363,11 +367,12 @@ def mark_attendance():
         print("⚠️ Server error:", str(e))
         return jsonify({"error": "Server error: Could not mark attendance"}), 500
 
+# Fetch Attendance Summary API
 @app.route('/attendance_summary/<username>', methods=['GET'])
 def get_attendance_summary(username):
     month = request.args.get('month')
-    if not month:
-        return jsonify({"error": "Month parameter is required"}), 400
+    if not month or not month.isdigit() or int(month) < 1 or int(month) > 12:
+        return jsonify({"error": "Invalid month parameter. Use a value between 01 and 12."}), 400
 
     try:
         conn = get_db_connection_att()
@@ -451,8 +456,12 @@ def get_attendance_summary(username):
         return jsonify({"error": "Server error: Could not fetch attendance summary"}), 500
 
 # Fetch Attendance Records API
-@app.route('/attendance_records/<username>', methods=['GET'])
-def get_attendance_records(username):
+@app.route('/attendance_summary/<username>', methods=['GET'])
+def get_attendance_summary(username):
+    month = request.args.get('month')
+    if not month or not month.isdigit() or int(month) < 1 or int(month) > 12:
+        return jsonify({"error": "Invalid month parameter. Use a value between 01 and 12."}), 400
+
     try:
         conn = get_db_connection_att()
         if not conn:
@@ -467,39 +476,75 @@ def get_attendance_records(username):
             conn.close()
             return jsonify({"error": "Attendance table not found"}), 404
 
-        # Fetch records from the table
-        cursor.execute(f"SELECT * FROM {table_name}")
-        records = cursor.fetchall()
-        conn.close()
+        # Fetch all unique working days in the selected month
+        cursor.execute(
+            f"SELECT DISTINCT date FROM {table_name} WHERE attendance_month = %s",
+            (month,)
+        )
+        working_days = cursor.fetchall()
+        total_working_days = len(working_days)
 
-        attendance_records = []
-        for record in records:
-            attendance_records.append({
-                "rollNumber": record[1],
-                "name": record[2],
-                "father_name": record[3],
-                "mother_name": record[4],
-                "date_of_birth": record[5].strftime('%Y-%m-%d'),  # Format date as YYYY-MM-DD
-                "class": record[6],
-                "category": record[7],
-                "gender": record[8],
-                "academicYear": record[9],
-                "attendance_month": record[10],
-                "time": record[11],
-                "date": record[12]
+        # Fetch all students from the registration table
+        conn_reg = get_db_connection_reg()
+        if not conn_reg:
+            return jsonify({"error": "Database connection error"}), 500
+
+        cursor_reg = conn_reg.cursor()
+        student_table_name = f"students_{username}"
+        cursor_reg.execute(f"SELECT * FROM {student_table_name}")
+        students = cursor_reg.fetchall()
+        conn_reg.close()
+
+        attendance_summary = []
+        for student in students:
+            rollNumber = student[1]
+            name = student[2]
+            father_name = student[3]
+            mother_name = student[4]
+            date_of_birth = student[5].strftime('%Y-%m-%d')
+            classValue = student[6]
+            category = student[7]
+            gender = student[8]
+            academicYear = student[9]
+
+            # Fetch attendance records for the selected month
+            cursor.execute(
+                f"SELECT DISTINCT date FROM {table_name} WHERE rollNumber = %s AND attendance_month = %s",
+                (rollNumber, month)
+            )
+            present_days = cursor.fetchall()
+            days_present = len(present_days)
+            days_absent = total_working_days - days_present
+
+            attendance_summary.append({
+                "rollNumber": rollNumber,
+                "name": name,
+                "father_name": father_name,
+                "mother_name": mother_name,
+                "date_of_birth": date_of_birth,
+                "class": classValue,
+                "category": category,
+                "gender": gender,
+                "academicYear": academicYear,
+                "days_present": days_present,
+                "days_absent": days_absent
             })
 
-        return jsonify({"records": attendance_records})
+        conn.close()
+        return jsonify({
+            "attendance_summary": attendance_summary,
+            "total_working_days": total_working_days
+        })
 
     except psycopg2.Error as e:
         print("⚠️ PostgreSQL Error:", str(e))
         return jsonify({"error": "Database error"}), 500
     except Exception as e:
         print("⚠️ Server error:", str(e))
-        return jsonify({"error": "Server error: Could not fetch attendance records"}), 500
+        return jsonify({"error": "Server error: Could not fetch attendance summary"}), 500
 
 # Start the Flask Server
 if __name__ == '__main__':
     print(f"🚀 Starting server on port 5500...")
-    app.run(host="0.0.0.0", port=5500, debug=False)
+    app.run(host="0.0.0.0", port=5500, debug=True)
     
