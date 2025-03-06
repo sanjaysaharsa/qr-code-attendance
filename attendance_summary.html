@@ -113,7 +113,6 @@
                     <th>Gender</th>
                     <th>Academic Year</th>
                     <th>Days Present</th>
-                    <th>Days Absent</th>
                 </tr>
             </thead>
             <tbody>
@@ -125,17 +124,26 @@
     <script>
         function fetchAttendanceSummary() {
             const month = document.getElementById('month').value;
-            const username = localStorage.getItem("username"); // Get the username from localStorage
+            const username = localStorage.getItem("username");
+
+            console.log("Month:", month); // Debugging
+            console.log("Username:", username); // Debugging
 
             if (!username) {
                 alert("Please log in first.");
-                window.location.href = "index.html"; // Redirect to login page
+                window.location.href = "index.html";
                 return;
             }
 
             fetch(`/attendance_summary/${username}?month=${month}`)
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
+                    console.log("API Response:", data); // Debugging
                     const tableBody = document.querySelector("#attendanceTable tbody");
                     tableBody.innerHTML = ""; // Clear existing rows
 
@@ -157,7 +165,6 @@
                             <td>${student.gender}</td>
                             <td>${student.academicYear}</td>
                             <td>${student.days_present}</td>
-                            <td>${student.days_absent}</td>
                         `;
                         tableBody.appendChild(row);
                     });
