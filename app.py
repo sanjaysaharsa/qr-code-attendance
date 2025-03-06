@@ -7,7 +7,6 @@ from io import BytesIO
 import base64
 from pathlib import Path
 import requests
-from datetime import datetime
 
 # Define SheetDB API URL
 SHEETDB_REGISTRATION_URL = "https://sheetdb.io/api/v1/lvg1wuw9n1k20"
@@ -305,6 +304,8 @@ def mark_attendance():
     if not data:
         return jsonify({"error": "No data provided"}), 400
 
+    print("Incoming Attendance Data:", data)  # Debugging
+
     username = data.get("username")
     rollNumber = data.get("rollNumber")
     name = data.get("name")
@@ -315,14 +316,9 @@ def mark_attendance():
     category = data.get("category")
     gender = data.get("gender")
     academicYear = data.get("academicYear")
+    attendance_month = data.get("attendance_month")
     time = data.get("time")
     date = data.get("date")
-
-    # Extract month from the date field
-    try:
-        attendance_month = datetime.strptime(date, "%Y-%m-%d").strftime("%m")
-    except ValueError:
-        return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
 
     try:
         if not create_user_attendance_table(username):
@@ -384,14 +380,6 @@ def get_attendance_summary(username):
             conn.close()
             return jsonify({"error": "Attendance table not found"}), 404
 
-        # Fetch all unique working days in the selected month
-        cursor.execute(
-            f"SELECT DISTINCT date FROM {table_name} WHERE attendance_month = %s",
-            (month,)
-        )
-        working_days = cursor.fetchall()
-        total_working_days = len(working_days)
-
         # Fetch all students from the registration table
         conn_reg = get_db_connection_reg()
         if not conn_reg:
@@ -409,7 +397,7 @@ def get_attendance_summary(username):
             name = student[2]
             father_name = student[3]
             mother_name = student[4]
-            date_of_birth = student[5].strftime('%Y-%m-%d')
+            date_of_birth = student[5].strftime('%d-%m-%y')
             classValue = student[6]
             category = student[7]
             gender = student[8]
@@ -417,11 +405,15 @@ def get_attendance_summary(username):
 
             # Fetch attendance records for the selected month
             cursor.execute(
-                f"SELECT DISTINCT date FROM {table_name} WHERE rollNumber = %s AND attendance_month = %s",
+                f"SELECT * FROM {table_name} WHERE rollNumber = %s AND attendance_month = %s",
                 (rollNumber, month)
             )
-            present_days = cursor.fetchall()
-            days_present = len(present_days)
+            records = cursor.fetchall()
+
+            # Calculate the number of days present and absent
+            days_present = len(records)
+            # Assuming the month has 30 days for simplicity
+            days_absent = 30 - days_present
 
             attendance_summary.append({
                 "rollNumber": rollNumber,
@@ -433,14 +425,12 @@ def get_attendance_summary(username):
                 "category": category,
                 "gender": gender,
                 "academicYear": academicYear,
-                "days_present": days_present
+                "days_present": days_present,
+                "days_absent": days_absent
             })
 
         conn.close()
-        return jsonify({
-            "attendance_summary": attendance_summary,
-            "total_working_days": total_working_days
-        })
+        return jsonify({"attendance_summary": attendance_summary})
 
     except psycopg2.Error as e:
         print("⚠️ PostgreSQL Error:", str(e))
@@ -500,5 +490,5 @@ def get_attendance_records(username):
 # Start the Flask Server
 if __name__ == '__main__':
     print(f"🚀 Starting server on port 5500...")
-    app.run(host="0.0.0.0", port=5500, debug=True)
+    app.run(host="0.0.0.0", port=5500, debug=False)
     
