@@ -304,8 +304,6 @@ def mark_attendance():
     if not data:
         return jsonify({"error": "No data provided"}), 400
 
-    print("Incoming Attendance Data:", data)  # Debugging
-
     username = data.get("username")
     rollNumber = data.get("rollNumber")
     name = data.get("name")
@@ -316,9 +314,14 @@ def mark_attendance():
     category = data.get("category")
     gender = data.get("gender")
     academicYear = data.get("academicYear")
-    attendance_month = data.get("attendance_month")
     time = data.get("time")
     date = data.get("date")
+
+    # Extract month from the date field
+    try:
+        attendance_month = datetime.strptime(date, "%Y-%m-%d").strftime("%m")
+    except ValueError:
+        return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
 
     try:
         if not create_user_attendance_table(username):
@@ -380,6 +383,14 @@ def get_attendance_summary(username):
             conn.close()
             return jsonify({"error": "Attendance table not found"}), 404
 
+        # Fetch all unique working days in the selected month
+        cursor.execute(
+            f"SELECT DISTINCT date FROM {table_name} WHERE attendance_month = %s",
+            (month,)
+        )
+        working_days = cursor.fetchall()
+        total_working_days = len(working_days)
+
         # Fetch all students from the registration table
         conn_reg = get_db_connection_reg()
         if not conn_reg:
@@ -405,15 +416,12 @@ def get_attendance_summary(username):
 
             # Fetch attendance records for the selected month
             cursor.execute(
-                f"SELECT * FROM {table_name} WHERE rollNumber = %s AND attendance_month = %s",
+                f"SELECT DISTINCT date FROM {table_name} WHERE rollNumber = %s AND attendance_month = %s",
                 (rollNumber, month)
             )
-            records = cursor.fetchall()
-
-            # Calculate the number of days present and absent
-            days_present = len(records)
-            # Assuming the month has 30 days for simplicity
-            days_absent = 30 - days_present
+            present_days = cursor.fetchall()
+            days_present = len(present_days)
+            days_absent = total_working_days - days_present
 
             attendance_summary.append({
                 "rollNumber": rollNumber,
@@ -430,7 +438,10 @@ def get_attendance_summary(username):
             })
 
         conn.close()
-        return jsonify({"attendance_summary": attendance_summary})
+        return jsonify({
+            "attendance_summary": attendance_summary,
+            "total_working_days": total_working_days
+        })
 
     except psycopg2.Error as e:
         print("⚠️ PostgreSQL Error:", str(e))
