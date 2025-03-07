@@ -8,7 +8,12 @@
     <title>Attendance Summary</title>
     <link rel="stylesheet" href="style.css">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <!-- Include SheetJS library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
+    <!-- Include FileSaver.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
+        /* Your existing CSS styles */
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f4f4;
@@ -23,27 +28,27 @@
             background-color: #fff;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
-            overflow-x: auto; /* Allow horizontal scrolling on small screens */
+            overflow-x: auto;
         }
 
         h1 {
             text-align: center;
             color: #333;
-            font-size: 24px; /* Adjust font size for mobile */
+            font-size: 24px;
         }
 
         .month-selector {
             display: flex;
-            flex-wrap: wrap; /* Allow wrapping on small screens */
+            flex-wrap: wrap;
             justify-content: center;
             margin-bottom: 20px;
-            gap: 10px; /* Add spacing between elements */
+            gap: 10px;
         }
 
         .month-selector label {
             font-size: 16px;
             color: #555;
-            align-self: center; /* Center align label */
+            align-self: center;
         }
 
         .month-selector select {
@@ -51,7 +56,7 @@
             font-size: 16px;
             border-radius: 4px;
             border: 1px solid #ccc;
-            width: 150px; /* Set a fixed width for the dropdown */
+            width: 150px;
         }
 
         .month-selector button {
@@ -74,17 +79,14 @@
             margin-top: 20px;
         }
 
-        table,
-        th,
-        td {
+        table, th, td {
             border: 1px solid #ddd;
         }
 
-        th,
-        td {
+        th, td {
             padding: 12px;
             text-align: left;
-            font-size: 14px; /* Adjust font size for mobile */
+            font-size: 14px;
         }
 
         th {
@@ -100,7 +102,6 @@
             background-color: #f1f1f1;
         }
 
-        /* Responsive table styles */
         @media (max-width: 768px) {
             .container {
                 padding: 10px;
@@ -116,24 +117,45 @@
             }
 
             .month-selector select {
-                width: 100%; /* Full width on small screens */
+                width: 100%;
                 margin-bottom: 10px;
             }
 
             .month-selector button {
-                width: 100%; /* Full width on small screens */
+                width: 100%;
             }
 
             table {
                 display: block;
-                overflow-x: auto; /* Allow horizontal scrolling */
-                white-space: nowrap; /* Prevent text wrapping */
+                overflow-x: auto;
+                white-space: nowrap;
             }
 
-            th,
-            td {
-                min-width: 120px; /* Set minimum column width */
+            th, td {
+                min-width: 120px;
             }
+        }
+
+        /* New styles for buttons */
+        .action-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .action-buttons button {
+            padding: 8px 16px;
+            font-size: 16px;
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .action-buttons button:hover {
+            background-color: #218838;
         }
     </style>
 </head>
@@ -158,6 +180,11 @@
                 <option value="12">December</option>
             </select>
             <button onclick="fetchAttendanceSummary()">Fetch Summary</button>
+        </div>
+        <!-- Add Download and Export Buttons -->
+        <div class="action-buttons">
+            <button onclick="downloadTableAsCSV()">Download as CSV</button>
+            <button onclick="exportTableToExcel()">Export to Excel</button>
         </div>
         <table id="attendanceTable">
             <thead>
@@ -232,6 +259,33 @@
                     console.error('Error fetching attendance summary:', error);
                     alert("An error occurred while fetching the attendance summary.");
                 });
+        }
+
+        // Function to download table data as CSV
+        function downloadTableAsCSV() {
+            const table = document.getElementById("attendanceTable");
+            const rows = table.querySelectorAll("tr");
+            let csvContent = "";
+
+            rows.forEach(row => {
+                const rowData = [];
+                row.querySelectorAll("th, td").forEach(cell => {
+                    rowData.push(cell.innerText);
+                });
+                csvContent += rowData.join(",") + "\n";
+            });
+
+            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
+            saveAs(blob, "attendance_summary.csv");
+        }
+
+        // Function to export table data to Excel
+        function exportTableToExcel() {
+            const table = document.getElementById("attendanceTable");
+            const workbook = XLSX.utils.table_to_book(table);
+            const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+            const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
+            saveAs(blob, "attendance_summary.xlsx");
         }
     </script>
 </body>
